@@ -1,5 +1,6 @@
 use ply_engine::prelude::*;
 use qr_code_styling::{DotsOptions, QRCodeStyling};
+use rfd::FileDialog;
 
 struct Theme {
     pub backgorund: Color,
@@ -65,6 +66,20 @@ async fn main() {
             let image = render_qr(&current_url).unwrap();
             texture = Texture2D::from_image(&image)
         }
+
+        if is_key_pressed(KeyCode::F5) {
+            if let Some(path) = FileDialog::new().add_filter("png image", &["png"]).set_directory("./").save_file() {
+                let qr = QRCodeStyling::builder()
+                    .data(ply.get_text_value("url"))
+                    .size(300)
+                    .dots_options(DotsOptions::new(qr_code_styling::DotType::Square).with_color(qr_code_styling::Color::from_hex("#000000").unwrap()))
+                    .build()
+                    .unwrap();
+
+                qr.save(path, qr_code_styling::OutputFormat::Png).unwrap();
+            }
+        }
+
 
         let mut ui = ply.begin();
 
