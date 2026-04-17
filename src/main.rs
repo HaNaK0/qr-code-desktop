@@ -1,8 +1,11 @@
 use log::info;
-use ply_engine::engine;
 use ply_engine::prelude::*;
 use qr_code_styling::{DotsOptions, QRCodeStyling};
 use rfd::FileDialog;
+
+use crate::elements::button;
+
+mod elements;
 
 struct Theme {
     pub backgorund: Color,
@@ -51,36 +54,11 @@ fn render_qr(data: impl Into<String>) -> anyhow::Result<Image> {
     )?)
 }
 
-fn button(
-    ui: &mut Ui,
-    theme: &Theme,
-    label: impl AsRef<str>,
-    on_click: impl FnMut(Id, engine::PointerData) + 'static,
-) {
-    ui.element()
-        .width(fit!())
-        .height(fixed!(32.0))
-        .corner_radius(6.0)
-        .on_press(on_click)
-        .children(|ui| {
-            let bg = if ui.pressed() {
-                theme.accent
-            } else {
-                theme.surface
-            };
-
-            ui.element().width(fit!()).height(grow!())
-                .background_color(bg)
-                .corner_radius(6.0)
-                .layout(|l| l.padding((0, 16, 0, 16)).align(CenterX, CenterY))
-                .children(|ui| {
-                    ui.text(label.as_ref(), |t| t.font_size(14).color(theme.text_primary));
-                });
-        });
-}
-
 #[macroquad::main(window_conf)]
 async fn main() {
+    env_logger::init();
+    info!("Qr code desktop");
+
     static DEFAULT_FONT: FontAsset = FontAsset::Path("assets/fonts/lexend.ttf");
     let mut ply = Ply::<()>::new(&DEFAULT_FONT).await;
     let theme = Theme {
