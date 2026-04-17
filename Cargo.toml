@@ -10,3 +10,5 @@ log = "0.4.29"
 ply-engine = { version = "1.1", features = ["tinyvg", "text-styling"] }
 qr-code-styling = "0.1.1"
 rfd = "0.17.2"
+strum = { version = "0.28.0", features = ["derive"] }
+strum_macros = "0.28.0"
