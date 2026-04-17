@@ -1,3 +1,5 @@
+use log::info;
+use ply_engine::engine;
 use ply_engine::prelude::*;
 use qr_code_styling::{DotsOptions, QRCodeStyling};
 use rfd::FileDialog;
@@ -30,17 +32,51 @@ fn window_conf() -> macroquad::conf::Conf {
     }
 }
 
-fn render_qr(data: impl Into<String>) -> anyhow::Result<Image>{
+fn render_qr(data: impl Into<String>) -> anyhow::Result<Image> {
     let qr = QRCodeStyling::builder()
         .data(data)
         .size(300)
-        .dots_options(DotsOptions::new(qr_code_styling::DotType::Square).with_color(qr_code_styling::Color::from_hex("#000000").unwrap()))
+        .dots_options(
+            DotsOptions::new(qr_code_styling::DotType::Square)
+                .with_color(qr_code_styling::Color::from_hex("#000000").unwrap()),
+        )
         .build()
         .unwrap();
 
     let image_data = qr.render(qr_code_styling::OutputFormat::Png)?;
 
-    Ok(Image::from_file_with_format(&image_data, Some(ImageFormat::Png))?)
+    Ok(Image::from_file_with_format(
+        &image_data,
+        Some(ImageFormat::Png),
+    )?)
+}
+
+fn button(
+    ui: &mut Ui,
+    theme: &Theme,
+    label: impl AsRef<str>,
+    on_click: impl FnMut(Id, engine::PointerData) + 'static,
+) {
+    ui.element()
+        .width(fit!())
+        .height(fixed!(32.0))
+        .corner_radius(6.0)
+        .on_press(on_click)
+        .children(|ui| {
+            let bg = if ui.pressed() {
+                theme.accent
+            } else {
+                theme.surface
+            };
+
+            ui.element().width(fit!()).height(grow!())
+                .background_color(bg)
+                .corner_radius(6.0)
+                .layout(|l| l.padding((0, 16, 0, 16)).align(CenterX, CenterY))
+                .children(|ui| {
+                    ui.text(label.as_ref(), |t| t.font_size(14).color(theme.text_primary));
+                });
+        });
 }
 
 #[macroquad::main(window_conf)]
@@ -68,18 +104,24 @@ async fn main() {
         }
 
         if is_key_pressed(KeyCode::F5) {
-            if let Some(path) = FileDialog::new().add_filter("png image", &["png"]).set_directory("./").save_file() {
+            if let Some(path) = FileDialog::new()
+                .add_filter("png image", &["png"])
+                .set_directory("./")
+                .save_file()
+            {
                 let qr = QRCodeStyling::builder()
                     .data(ply.get_text_value("url"))
                     .size(300)
-                    .dots_options(DotsOptions::new(qr_code_styling::DotType::Square).with_color(qr_code_styling::Color::from_hex("#000000").unwrap()))
+                    .dots_options(
+                        DotsOptions::new(qr_code_styling::DotType::Square)
+                            .with_color(qr_code_styling::Color::from_hex("#000000").unwrap()),
+                    )
                     .build()
                     .unwrap();
 
                 qr.save(path, qr_code_styling::OutputFormat::Png).unwrap();
             }
         }
-
 
         let mut ui = ply.begin();
 
@@ -121,6 +163,13 @@ async fn main() {
                             .height(fixed!(300.0))
                             .image(texture.clone())
                             .empty();
+                    });
+                ui.element()
+                    .width(grow!())
+                    .height(fit!())
+                    .layout(|l| l.align(Right, CenterY))
+                    .children(|ui| {
+                        button(ui, &theme, "save", |_, _| {info!("going to save")})
                     });
             });
 
