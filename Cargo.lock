@@ -1871,6 +1871,7 @@ name = "qr-code-desktop"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "log",
  "ply-engine",
  "qr-code-styling",
  "rfd",
