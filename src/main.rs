@@ -3,9 +3,8 @@ use ply_engine::prelude::*;
 use qr_code_styling::{DotsOptions, QRCodeStyling};
 use rfd::FileDialog;
 
-use crate::elements::button;
-
 mod elements;
+mod qr;
 
 struct Theme {
     pub backgorund: Color,
@@ -18,7 +17,7 @@ struct Theme {
 fn window_conf() -> macroquad::conf::Conf {
     macroquad::conf::Conf {
         miniquad_conf: miniquad::conf::Conf {
-            window_title: "Hello Ply!".to_owned(),
+            window_title: "QR Code Desktop".to_owned(),
             window_width: 500,
             window_height: 600,
             high_dpi: true,
@@ -33,25 +32,6 @@ fn window_conf() -> macroquad::conf::Conf {
         draw_call_index_capacity: 100000,
         ..Default::default()
     }
-}
-
-fn render_qr(data: impl Into<String>) -> anyhow::Result<Image> {
-    let qr = QRCodeStyling::builder()
-        .data(data)
-        .size(300)
-        .dots_options(
-            DotsOptions::new(qr_code_styling::DotType::Square)
-                .with_color(qr_code_styling::Color::from_hex("#000000").unwrap()),
-        )
-        .build()
-        .unwrap();
-
-    let image_data = qr.render(qr_code_styling::OutputFormat::Png)?;
-
-    Ok(Image::from_file_with_format(
-        &image_data,
-        Some(ImageFormat::Png),
-    )?)
 }
 
 #[macroquad::main(window_conf)]
@@ -77,7 +57,8 @@ async fn main() {
         if ply.get_text_value("url") != current_url {
             current_url = ply.get_text_value("url").to_string();
 
-            let image = render_qr(&current_url).unwrap();
+            let desc = qr::QRCodeDesc { data: current_url.clone(), size: 300, dot_type: qr_code_styling::DotType::Square, hex_color: "#000000".to_string() };
+            let image = qr::render_qr(desc).unwrap();
             texture = Texture2D::from_image(&image)
         }
 
@@ -147,7 +128,7 @@ async fn main() {
                     .height(fit!())
                     .layout(|l| l.align(Right, CenterY))
                     .children(|ui| {
-                        button(ui, &theme, "save", |_, _| {info!("going to save")})
+                        elements::button(ui, &theme, "save", |_, _| {info!("going to save")})
                     });
             });
 
