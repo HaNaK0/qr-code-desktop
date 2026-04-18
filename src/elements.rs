@@ -1,4 +1,4 @@
-use ply_engine::{Ui, align::{AlignX::CenterX, AlignY::CenterY}, engine::PointerData, fit, fixed, grow, id::Id};
+use ply_engine::{Ui, align::{AlignX::CenterX, AlignY::CenterY}, fit, fixed, grow, id::Id};
 
 use crate::Theme;
 
@@ -6,13 +6,13 @@ pub(crate) fn button(
     ui: &mut Ui,
     theme: &Theme,
     label: impl AsRef<str>,
-    on_click: impl FnMut(Id ,PointerData) + 'static,
+    id: impl Into<Id>,
 ) {
     ui.element()
         .width(fit!())
         .height(fixed!(32.0))
         .corner_radius(6.0)
-        .on_press(on_click)
+        .id(id)
         .children(|ui| {
             let bg = if ui.pressed() {
                 theme.accent

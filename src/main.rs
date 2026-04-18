@@ -57,29 +57,24 @@ async fn main() {
         if ply.get_text_value("url") != current_url {
             current_url = ply.get_text_value("url").to_string();
 
-            let desc = qr::QRCodeDesc { data: current_url.clone(), size: 300, dot_type: qr_code_styling::DotType::Square, hex_color: "#000000".to_string() };
+            let desc = qr::QRCodeDesc {
+                data: current_url.clone(),
+                size: 300,
+                dot_type: qr_code_styling::DotType::Square,
+                hex_color: "#000000".to_string(),
+            };
             let image = qr::render_qr(desc).unwrap();
             texture = Texture2D::from_image(&image)
         }
 
-        if is_key_pressed(KeyCode::F5) {
-            if let Some(path) = FileDialog::new()
-                .add_filter("png image", &["png"])
-                .set_directory("./")
-                .save_file()
-            {
-                let qr = QRCodeStyling::builder()
-                    .data(ply.get_text_value("url"))
-                    .size(300)
-                    .dots_options(
-                        DotsOptions::new(qr_code_styling::DotType::Square)
-                            .with_color(qr_code_styling::Color::from_hex("#000000").unwrap()),
-                    )
-                    .build()
-                    .unwrap();
-
-                qr.save(path, qr_code_styling::OutputFormat::Png).unwrap();
-            }
+        if ply.is_just_pressed("save_button"){
+            let desc = qr::QRCodeDesc {
+                data: current_url.clone(),
+                size: 300,
+                dot_type: qr_code_styling::DotType::Square,
+                hex_color: "#000000".to_string(),
+            };
+            qr::save_qr(desc).unwrap();
         }
 
         let mut ui = ply.begin();
@@ -128,7 +123,7 @@ async fn main() {
                     .height(fit!())
                     .layout(|l| l.align(Right, CenterY))
                     .children(|ui| {
-                        elements::button(ui, &theme, "save", |_, _| {info!("going to save")})
+                        elements::button(ui, &theme, "save", "save_button")
                     });
             });
 
