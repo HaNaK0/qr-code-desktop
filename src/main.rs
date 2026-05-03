@@ -12,6 +12,29 @@ struct Theme {
     pub accent: (Color, Color, Color),
 }
 
+struct View {
+    pub model: qr::QRModel,
+    pub qr_texture: Texture2D,
+    pub dots_dropdown: bool,
+    pub save_button: bool,
+}
+
+impl View {
+    fn new() -> Self {
+        Self {
+            model: qr::QRModel {
+                data: "".to_string(),
+                size: 300,
+                dot_type: qr::DotType::Square,
+                hex_color: "#000000".to_string(),
+            },
+            qr_texture: Texture2D::empty(),
+            dots_dropdown: false,
+            save_button: false,
+        }
+    }
+}
+
 fn window_conf() -> macroquad::conf::Conf {
     macroquad::conf::Conf {
         miniquad_conf: miniquad::conf::Conf {
@@ -55,37 +78,13 @@ async fn main() {
         text_dark: Color::from(0x000000),
     };
 
-    let mut texture = Texture2D::empty();
-    let mut current_url = String::new();
-    let mut dropdown_open = false;
-    let mut model = qr::QRModel { data: "".to_string(), size: 32, dot_type: qr::DotType::Square, hex_color: "#000000".to_string()};
+    let mut view = View::new();
 
     loop {
         clear_background(theme.surface.0.into());
-        if ply.get_text_value("url") != current_url {
-            current_url = ply.get_text_value("url").to_string();
 
-            if !current_url.is_empty() {
-                let desc = qr::QRModel {
-                    data: current_url.clone(),
-                    size: 300,
-                    dot_type: qr::DotType::Square,
-                    hex_color: "#000000".to_string(),
-                };
-                let image = qr::render_qr(desc).unwrap();
-                texture = Texture2D::from_image(&image);
-            }
-        }
-
-        if ply.is_just_pressed("save_button") {
-            let desc = qr::QRModel {
-                data: current_url.clone(),
-                size: 300,
-                dot_type: qr::DotType::Square,
-                hex_color: "#000000".to_string(),
-            };
-            qr::save_qr(desc).unwrap();
-        }
+        let mut next_model = view.model.clone();
+        next_model.data = ply.get_text_value("url").to_string();
 
         let mut ui = ply.begin();
 
@@ -120,11 +119,11 @@ async fn main() {
                         ui,
                         &theme,
                         "dot_type",
-                        &Some(model.dot_type),
-                        &dropdown_open,
+                        &Some(view.model.dot_type),
+                        &view.dots_dropdown,
                     );
-                    dropdown_open = open;
-                    model.dot_type = dt.unwrap_or_default()
+                    view.dots_dropdown = open;
+                    next_model.dot_type = dt.unwrap_or_default()
                 });
                 ui.element()
                     .height(grow!())
@@ -136,18 +135,32 @@ async fn main() {
                         ui.element()
                             .width(fixed!(300.0))
                             .height(fixed!(300.0))
-                            .image(texture.clone())
+                            .image(view.qr_texture.clone())
                             .empty();
                     });
                 ui.element()
                     .width(grow!())
                     .height(fit!())
                     .layout(|l| l.align(Right, CenterY))
-                    .children(|ui| elements::button(ui, &theme, "save", "save_button"));
+                    .children(|ui| {
+                        view.save_button = elements::button(ui, &theme, "save", "save_button");
+                    });
             });
 
-        ui.show(|_| {}).await;
+        if view.model != next_model {
+            view.model = next_model;
 
+            if !view.model.data.is_empty() {
+                let image = qr::render_qr(&view.model).unwrap();
+                view.qr_texture = Texture2D::from_image(&image);
+            }
+        }
+
+        if view.save_button {
+            qr::save_qr(&view.model).unwrap();
+        }
+
+        ui.show(|_| {}).await;
         next_frame().await;
     }
 }

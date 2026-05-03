@@ -1,9 +1,11 @@
 use anyhow::anyhow;
+use log::warn;
 use ply_engine::prelude::{Image, ImageFormat};
 use qr_code_styling::{self, DotsOptions, QRCodeStyling};
 use rfd::FileDialog;
 use strum::{Display, EnumIter};
 
+#[derive(PartialEq, Eq, Clone)]
 pub(crate) struct QRModel {
     pub data: String,
     pub size: u32,
@@ -11,7 +13,7 @@ pub(crate) struct QRModel {
     pub hex_color: String,
 }
 
-#[derive(Debug,EnumIter,Clone, Copy, Display, Default)]
+#[derive(Debug,EnumIter,Clone, Copy, Display, Default, PartialEq, Eq)]
 pub(crate) enum DotType {
     #[default]
     Square,
@@ -49,9 +51,9 @@ impl From<DotType> for qr_code_styling::DotType {
 }
 
 impl QRModel {
-    fn into_qr_code_style(self) -> anyhow::Result<QRCodeStyling> {
+    fn create_qr_code_style(&self) -> anyhow::Result<QRCodeStyling> {
         Ok(QRCodeStyling::builder()
-            .data(self.data)
+            .data(self.data.clone())
             .size(self.size)
             .dots_options(
                 DotsOptions::new(self.dot_type.into())
@@ -61,8 +63,8 @@ impl QRModel {
     }
 }
 
-pub(crate) fn render_qr(qr_desc: QRModel) -> anyhow::Result<Image> {
-    let qr = qr_desc.into_qr_code_style()?;
+pub(crate) fn render_qr(qr_desc: &QRModel) -> anyhow::Result<Image> {
+    let qr = qr_desc.create_qr_code_style()?;
     let image_data = qr.render(qr_code_styling::OutputFormat::Png)?;
 
     Ok(Image::from_file_with_format(
@@ -71,8 +73,11 @@ pub(crate) fn render_qr(qr_desc: QRModel) -> anyhow::Result<Image> {
     )?)
 }
 
-pub(crate) fn save_qr(qr_desc: QRModel) -> anyhow::Result<()> {
-    let qr = qr_desc.into_qr_code_style()?;
+pub(crate) fn save_qr(qr_desc: &QRModel) -> anyhow::Result<()> {
+    if qr_desc.data.is_empty() {
+        warn!("Data is empty can't save an empty qr code")
+    }
+    let qr = qr_desc.create_qr_code_style()?;
 
     if let Some(path) = FileDialog::new()
         .add_filter("png image", &["png"])

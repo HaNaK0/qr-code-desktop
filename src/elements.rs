@@ -14,7 +14,8 @@ use ply_engine::{
 
 use crate::Theme;
 
-pub(crate) fn button(ui: &mut Ui, theme: &Theme, label: impl AsRef<str>, id: impl Into<Id>) {
+pub(crate) fn button(ui: &mut Ui, theme: &Theme, label: impl AsRef<str>, id: impl Into<Id>) -> bool {
+    let mut clicked = false;
     ui.element()
         .width(fit!())
         .height(fixed!(32.0))
@@ -29,6 +30,8 @@ pub(crate) fn button(ui: &mut Ui, theme: &Theme, label: impl AsRef<str>, id: imp
                 theme.accent.2
             };
 
+            clicked = ui.just_pressed();
+
             ui.element()
                 .width(fit!())
                 .height(grow!())
@@ -39,6 +42,8 @@ pub(crate) fn button(ui: &mut Ui, theme: &Theme, label: impl AsRef<str>, id: imp
                     ui.text(label.as_ref(), |t| t.font_size(14).color(theme.text_dark));
                 });
         });
+
+    clicked
 }
 
 pub(crate) fn dropdown<E: strum::IntoEnumIterator + Display + Clone>(
