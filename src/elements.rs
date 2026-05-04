@@ -14,7 +14,12 @@ use ply_engine::{
 
 use crate::Theme;
 
-pub(crate) fn button(ui: &mut Ui, theme: &Theme, label: impl AsRef<str>, id: impl Into<Id>) -> bool {
+pub(crate) fn button(
+    ui: &mut Ui,
+    theme: &Theme,
+    label: impl AsRef<str>,
+    id: impl Into<Id>,
+) -> bool {
     let mut clicked = false;
     ui.element()
         .width(fit!())
@@ -49,7 +54,7 @@ pub(crate) fn button(ui: &mut Ui, theme: &Theme, label: impl AsRef<str>, id: imp
 pub(crate) fn dropdown<E: strum::IntoEnumIterator + Display + Clone>(
     ui: &mut Ui,
     theme: &Theme,
-    id: impl Into<Id> + Clone,
+    id: impl Into<Id> ,
     current_value: &Option<E>,
     open: &bool,
 ) -> (Option<E>, bool) {
@@ -60,7 +65,7 @@ pub(crate) fn dropdown<E: strum::IntoEnumIterator + Display + Clone>(
         .height(fixed!(32.0))
         .layout(|l| l.align(Left, CenterY).padding(8))
         .corner_radius(6.0)
-        .id(id.clone())
+        .id(id)
         .background_color(theme.surface.2)
         .children(|ui| {
             if let Some(value) = &current_value {
@@ -119,4 +124,22 @@ pub(crate) fn dropdown<E: strum::IntoEnumIterator + Display + Clone>(
         });
 
     (current_value, open)
+}
+
+pub(crate) fn text_input(ui: &mut Ui, theme: &Theme, id: impl Into<Id>, placeholder: &str) -> String {
+    let element_id = ui.element()
+        .id(id)
+        .width(grow!())
+        .height(fixed!(20.0))
+        .corner_radius(12.0)
+        .background_color(theme.surface.2)
+        .text_input(|ti| {
+            ti.font_size(16)
+                .placeholder_color(theme.text_secondary)
+                .text_color(theme.text_primary)
+                .placeholder(placeholder)
+        })
+        .empty();
+
+    ui.get_text_value(element_id).to_string()
 }

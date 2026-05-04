@@ -10,7 +10,7 @@ pub(crate) struct QRModel {
     pub data: String,
     pub size: u32,
     pub dot_type: DotType,
-    pub hex_color: String,
+    pub dot_color: String,
 }
 
 #[derive(Debug,EnumIter,Clone, Copy, Display, Default, PartialEq, Eq)]
@@ -57,7 +57,7 @@ impl QRModel {
             .size(self.size)
             .dots_options(
                 DotsOptions::new(self.dot_type.into())
-                    .with_color(qr_code_styling::Color::from_hex(&self.hex_color)?),
+                    .with_color(qr_code_styling::Color::from_hex(&self.dot_color)?),
             )
             .build()?)
     }

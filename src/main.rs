@@ -26,7 +26,7 @@ impl View {
                 data: "".to_string(),
                 size: 300,
                 dot_type: qr::DotType::Square,
-                hex_color: "#000000".to_string(),
+                dot_color: "#000000".to_string(),
             },
             qr_texture: Texture2D::empty(),
             dots_dropdown: false,
@@ -100,19 +100,7 @@ async fn main() {
                     .layout(|l| l.direction(LeftToRight).padding(8).align(Left, CenterY))
                     .children(|ui| {
                         ui.text("Url: ", |t| t.color(theme.text_primary).font_size(16));
-                        ui.element()
-                            .id("url")
-                            .width(grow!())
-                            .height(fixed!(20.0))
-                            .corner_radius(12.0)
-                            .background_color(theme.surface.2)
-                            .text_input(|ti| {
-                                ti.font_size(16)
-                                    .placeholder_color(theme.text_secondary)
-                                    .text_color(theme.text_primary)
-                                    .placeholder("url")
-                            })
-                            .empty();
+                        next_model.data = elements::text_input(ui, &theme, "url", "url")
                     });
                 ui.element().height(fit!()).width(grow!()).children(|ui| {
                     let (dt, open) = elements::dropdown(
