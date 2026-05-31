@@ -1,16 +1,10 @@
+use anyhow::Context;
 use log::info;
 use ply_engine::prelude::*;
 
 mod elements;
 mod qr;
-
-struct Theme {
-    pub text_primary: Color,
-    pub text_secondary: Color,
-    pub text_dark: Color,
-    pub surface: (Color, Color, Color),
-    pub accent: (Color, Color, Color),
-}
+mod theme;
 
 struct View {
     pub model: qr::QRModel,
@@ -62,7 +56,7 @@ async fn main() {
 
     static DEFAULT_FONT: FontAsset = FontAsset::Path("assets/fonts/lexend.ttf");
     let mut ply = Ply::<()>::new(&DEFAULT_FONT).await;
-    let theme = Theme {
+    let theme = theme::Theme {
         surface: (
             Color::from(0x121212),
             Color::from(0x252525),
@@ -76,6 +70,7 @@ async fn main() {
         text_primary: Color::from(0xF1F5F9),
         text_secondary: Color::from(0x94A3B8),
         text_dark: Color::from(0x000000),
+        text_error: Color::rgb(255.0, 0.0, 0.0),
     };
 
     let mut view = View::new();
@@ -84,7 +79,6 @@ async fn main() {
         clear_background(theme.surface.0.into());
 
         let mut next_model = view.model.clone();
-        next_model.data = ply.get_text_value("url").to_string();
 
         let mut ui = ply.begin();
 
@@ -100,19 +94,35 @@ async fn main() {
                     .layout(|l| l.direction(LeftToRight).padding(8).align(Left, CenterY))
                     .children(|ui| {
                         ui.text("Url: ", |t| t.color(theme.text_primary).font_size(16));
-                        next_model.data = elements::text_input(ui, &theme, "url", "url")
+                        next_model.data =
+                            elements::text_input(ui, &theme, "url", "url", |_| Ok(()));
                     });
-                ui.element().height(fit!()).width(grow!()).children(|ui| {
-                    let (dt, open) = elements::dropdown(
-                        ui,
-                        &theme,
-                        "dot_type",
-                        &Some(view.model.dot_type),
-                        &view.dots_dropdown,
-                    );
-                    view.dots_dropdown = open;
-                    next_model.dot_type = dt.unwrap_or_default()
-                });
+                // Dots options
+                ui.element()
+                    .height(fit!())
+                    .width(grow!())
+                    .layout(|l| l.direction(LeftToRight).padding(8).align(Left, CenterY))
+                    .children(|ui| {
+                        ui.text("Dots: ", |t| t.color(theme.text_primary).font_size(16));
+                        let (dt, open) = elements::dropdown(
+                            ui,
+                            &theme,
+                            "dot_type",
+                            &Some(view.model.dot_type),
+                            &view.dots_dropdown,
+                        );
+                        view.dots_dropdown = open;
+                        next_model.dot_type = dt.unwrap_or_default();
+
+                        ui.text("Color", |t| t.color(theme.text_primary).font_size(16));
+                        let col = elements::text_input(ui, &theme, "color_input", "color", |s| {
+                            qr_code_styling::Color::from_hex(s)
+                                .map(|_| ())
+                                .with_context(|| "Incorrect color input by user")
+                        });
+
+                        next_model.dot_color = col;
+                    });
                 ui.element()
                     .height(grow!())
                     .width(grow!())

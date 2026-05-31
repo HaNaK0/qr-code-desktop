@@ -52,12 +52,19 @@ impl From<DotType> for qr_code_styling::DotType {
 
 impl QRModel {
     fn create_qr_code_style(&self) -> anyhow::Result<QRCodeStyling> {
+        let dot_color = match qr_code_styling::Color::from_hex(&self.dot_color) {
+            Ok(c) => c,
+            Err(e) => {
+                warn!("incorrect color string. Details: {e}");
+                qr_code_styling::Color::from_hex("#000000")?
+            },
+        };
         Ok(QRCodeStyling::builder()
             .data(self.data.clone())
             .size(self.size)
             .dots_options(
                 DotsOptions::new(self.dot_type.into())
-                    .with_color(qr_code_styling::Color::from_hex(&self.dot_color)?),
+                    .with_color(dot_color),
             )
             .build()?)
     }

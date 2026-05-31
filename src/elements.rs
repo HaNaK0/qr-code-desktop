@@ -12,7 +12,7 @@ use ply_engine::{
     Ui,
 };
 
-use crate::Theme;
+use crate::theme::Theme;
 
 pub(crate) fn button(
     ui: &mut Ui,
@@ -54,7 +54,7 @@ pub(crate) fn button(
 pub(crate) fn dropdown<E: strum::IntoEnumIterator + Display + Clone>(
     ui: &mut Ui,
     theme: &Theme,
-    id: impl Into<Id> ,
+    id: impl Into<Id>,
     current_value: &Option<E>,
     open: &bool,
 ) -> (Option<E>, bool) {
@@ -126,20 +126,38 @@ pub(crate) fn dropdown<E: strum::IntoEnumIterator + Display + Clone>(
     (current_value, open)
 }
 
-pub(crate) fn text_input(ui: &mut Ui, theme: &Theme, id: impl Into<Id>, placeholder: &str) -> String {
-    let element_id = ui.element()
+pub(crate) fn text_input<F>(
+    ui: &mut Ui,
+    theme: &Theme,
+    id: impl Into<Id> + Clone,
+    placeholder: &str,
+    validation: F,
+) -> String
+where
+    F: FnOnce(&str) -> Result<(), anyhow::Error>,
+{
+    let text = ui.get_text_value(id.clone()).to_string();
+    let text_result = validation(&text);
+        
+    ui
+        .element()
         .id(id)
         .width(grow!())
         .height(fixed!(20.0))
         .corner_radius(12.0)
         .background_color(theme.surface.2)
         .text_input(|ti| {
+            let col = if text_result.is_ok() {
+                theme.text_primary
+            } else {
+                theme.text_error
+            };
             ti.font_size(16)
                 .placeholder_color(theme.text_secondary)
-                .text_color(theme.text_primary)
+                .text_color(col)
                 .placeholder(placeholder)
         })
         .empty();
 
-    ui.get_text_value(element_id).to_string()
+    text
 }
