@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use log::warn;
 use ply_engine::prelude::{Image, ImageFormat};
 use qr_code_styling::{self, DotsOptions, QRCodeStyling};
-use rfd::FileDialog;
+use rfd::{FileDialog, MessageDialog};
 use strum::{Display, EnumIter};
 
 #[derive(PartialEq, Eq, Clone)]
@@ -13,7 +13,7 @@ pub(crate) struct QRModel {
     pub dot_color: String,
 }
 
-#[derive(Debug,EnumIter,Clone, Copy, Display, Default, PartialEq, Eq)]
+#[derive(Debug, EnumIter, Clone, Copy, Display, Default, PartialEq, Eq)]
 pub(crate) enum DotType {
     #[default]
     Square,
@@ -57,15 +57,12 @@ impl QRModel {
             Err(e) => {
                 warn!("incorrect color string. Details: {e}");
                 qr_code_styling::Color::from_hex("#000000")?
-            },
+            }
         };
         Ok(QRCodeStyling::builder()
             .data(self.data.clone())
             .size(self.size)
-            .dots_options(
-                DotsOptions::new(self.dot_type.into())
-                    .with_color(dot_color),
-            )
+            .dots_options(DotsOptions::new(self.dot_type.into()).with_color(dot_color))
             .build()?)
     }
 }
@@ -95,7 +92,12 @@ pub(crate) fn save_qr(qr_desc: &QRModel) -> anyhow::Result<()> {
         .set_directory("./")
         .save_file()
     {
-        let output_format = match path.extension().unwrap().to_str().unwrap() {
+        let output_format = match path
+            .extension()
+            .ok_or(anyhow!("failed to get file extension"))?
+            .to_str()
+            .ok_or(anyhow!("failed to convert extension to string"))?
+        {
             "png" => Ok(qr_code_styling::OutputFormat::Png),
             "jpg" | "jpeg" => Ok(qr_code_styling::OutputFormat::Jpeg),
             "svg" => Ok(qr_code_styling::OutputFormat::Svg),
@@ -107,4 +109,13 @@ pub(crate) fn save_qr(qr_desc: &QRModel) -> anyhow::Result<()> {
         qr.save(path, output_format)?;
     }
     Ok(())
+}
+
+pub(crate) fn show_error(error: impl Into<String>) {
+    MessageDialog::new()
+        .set_level(rfd::MessageLevel::Error)
+        .set_title("Error!")
+        .set_description(error)
+        .set_buttons(rfd::MessageButtons::Ok)
+        .show();
 }

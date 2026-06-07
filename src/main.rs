@@ -114,7 +114,7 @@ async fn main() {
                         view.dots_dropdown = open;
                         next_model.dot_type = dt.unwrap_or_default();
 
-                        ui.text("Color", |t| t.color(theme.text_primary).font_size(16));
+                        ui.text("Color: ", |t| t.color(theme.text_primary).font_size(16));
                         let col = elements::text_input(ui, &theme, "color_input", "color", |s| {
                             qr_code_styling::Color::from_hex(s)
                                 .map(|_| ())
@@ -149,13 +149,15 @@ async fn main() {
             view.model = next_model;
 
             if !view.model.data.is_empty() {
-                let image = qr::render_qr(&view.model).unwrap();
-                view.qr_texture = Texture2D::from_image(&image);
+                match qr::render_qr(&view.model) {
+                    Ok(image) => view.qr_texture = Texture2D::from_image(&image),
+                    Err(e) => qr::show_error(format!("Failed to render the qr code! Reason:{e}")),
+                }
             }
         }
 
         if view.save_button {
-            qr::save_qr(&view.model).unwrap();
+            qr::save_qr(&view.model).unwrap_or_else(|e| qr::show_error(format!("Failed to save the qr code! Reason:{e}")));
         }
 
         ui.show(|_| {}).await;
