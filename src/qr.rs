@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use log::warn;
+use log::{error, warn};
 use ply_engine::prelude::{Image, ImageFormat};
 use qr_code_styling::{self, DotsOptions, QRCodeStyling};
 use rfd::{FileDialog, MessageDialog};
@@ -111,7 +111,8 @@ pub(crate) fn save_qr(qr_desc: &QRModel) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub(crate) fn show_error(error: impl Into<String>) {
+pub(crate) fn show_error(error: String) {
+    error!("displaying error with reason:{error}");
     MessageDialog::new()
         .set_level(rfd::MessageLevel::Error)
         .set_title("Error!")
