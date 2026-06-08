@@ -136,7 +136,7 @@ pub(crate) fn text_input<F>(
 where
     F: FnOnce(&str) -> Result<(), anyhow::Error>,
 {
-    let text = ui.get_text_value(id.clone()).to_string();
+    let text = ui.get_text_value(id.clone()).trim().to_string();
     let text_result = validation(&text);
         
     ui

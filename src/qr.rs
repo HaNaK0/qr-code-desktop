@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use log::{error, warn};
 use ply_engine::prelude::{Image, ImageFormat};
-use qr_code_styling::{self, DotsOptions, QRCodeStyling};
+use qr_code_styling::{self, CornersDotOptions, DotsOptions, QRCodeStyling};
 use rfd::{FileDialog, MessageDialog};
 use strum::{Display, EnumIter};
 
@@ -11,6 +11,21 @@ pub(crate) struct QRModel {
     pub size: u32,
     pub dot_type: DotType,
     pub dot_color: String,
+    pub corner_dot_type: CornerDotType,
+    pub corner_dot_color: String,
+}
+
+impl Default for QRModel {
+    fn default() -> Self {
+        Self {
+            data: Default::default(),
+            size: 300,
+            dot_type: Default::default(),
+            dot_color: "#000".to_string(),
+            corner_dot_type: Default::default(),
+            corner_dot_color: "#000".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, EnumIter, Clone, Copy, Display, Default, PartialEq, Eq)]
@@ -50,19 +65,53 @@ impl From<DotType> for qr_code_styling::DotType {
     }
 }
 
+#[derive(Debug, EnumIter, Clone, Copy, Display, Default, PartialEq, Eq)]
+pub(crate) enum CornerDotType {
+    #[default]
+    Dot,
+    Square,
+}
+
+impl From<qr_code_styling::CornerDotType> for CornerDotType {
+    fn from(value: qr_code_styling::CornerDotType) -> Self {
+        match value {
+            qr_code_styling::CornerDotType::Dot => Self::Dot,
+            qr_code_styling::CornerDotType::Square => Self::Square,
+        }
+    }
+}
+
+impl From<CornerDotType> for qr_code_styling::CornerDotType {
+    fn from(value: CornerDotType) -> Self {
+        match value {
+            CornerDotType::Dot => qr_code_styling::CornerDotType::Dot,
+            CornerDotType::Square => qr_code_styling::CornerDotType::Square,
+        }
+    }
+}
+
 impl QRModel {
     fn create_qr_code_style(&self) -> anyhow::Result<QRCodeStyling> {
         let dot_color = match qr_code_styling::Color::from_hex(&self.dot_color) {
             Ok(c) => c,
             Err(e) => {
                 warn!("incorrect color string. Details: {e}");
-                qr_code_styling::Color::from_hex("#000000")?
+                qr_code_styling::Color::BLACK
             }
         };
+
         Ok(QRCodeStyling::builder()
             .data(self.data.clone())
             .size(self.size)
             .dots_options(DotsOptions::new(self.dot_type.into()).with_color(dot_color))
+            .corners_dot_options(
+                CornersDotOptions::new(self.corner_dot_type.into()).with_color(
+                    qr_code_styling::Color::from_hex(&self.corner_dot_color).unwrap_or_else(|e| {
+                        warn!("incorect color string in corner dot color! Reason:{e}");
+                        qr_code_styling::Color::BLACK
+                    }),
+                ),
+            )
             .build()?)
     }
 }

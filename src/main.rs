@@ -10,20 +10,17 @@ struct View {
     pub model: qr::QRModel,
     pub qr_texture: Texture2D,
     pub dots_dropdown: bool,
+    pub corner_dots_dropdown: bool,
     pub save_button: bool,
 }
 
 impl View {
     fn new() -> Self {
         Self {
-            model: qr::QRModel {
-                data: "".to_string(),
-                size: 300,
-                dot_type: qr::DotType::Square,
-                dot_color: "#000000".to_string(),
-            },
+            model: Default::default(),
             qr_texture: Texture2D::empty(),
             dots_dropdown: false,
+            corner_dots_dropdown: false,
             save_button: false,
         }
     }
@@ -123,6 +120,36 @@ async fn main() {
 
                         next_model.dot_color = col;
                     });
+                // Corner Dot
+                ui.element()
+                    .height(fit!())
+                    .width(grow!())
+                    .layout(|l| l.direction(LeftToRight).padding(8).align(Left, CenterY))
+                    .children(|ui| {
+                        ui.text("Corner dot: ", |t| {
+                            t.color(theme.text_primary).font_size(16)
+                        });
+
+                        let (dt, open) = elements::dropdown(
+                            ui,
+                            &theme,
+                            "corner_dot_type",
+                            &Some(view.model.corner_dot_type),
+                            &view.corner_dots_dropdown,
+                        );
+
+                        view.corner_dots_dropdown = open;
+                        next_model.corner_dot_type = dt.unwrap_or_default();
+
+                        ui.text("Color", |t| t.color(theme.text_primary).font_size(16));
+                        let col = elements::text_input(ui, &theme, "corner_dot_color_input", "color", |s| {
+                            qr_code_styling::Color::from_hex(s)
+                                .map(|_| ())
+                                .with_context(|| "Incorrect color input by user")
+                        });
+
+                        next_model.corner_dot_color = col;
+                    });
                 ui.element()
                     .height(grow!())
                     .width(grow!())
@@ -157,7 +184,9 @@ async fn main() {
         }
 
         if view.save_button {
-            qr::save_qr(&view.model).unwrap_or_else(|e| qr::show_error(format!("Failed to save the qr code! Reason:{e}")));
+            qr::save_qr(&view.model).unwrap_or_else(|e| {
+                qr::show_error(format!("Failed to save the qr code! Reason:{e}"))
+            });
         }
 
         ui.show(|_| {}).await;
