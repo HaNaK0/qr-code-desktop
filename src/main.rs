@@ -100,6 +100,7 @@ async fn main() {
                     .width(grow!())
                     .layout(|l| l.direction(LeftToRight).padding(8).align(Left, CenterY))
                     .children(|ui| {
+                        ui.text("Shapes: ", |t| t.color(theme.text_primary).font_size(16));
                         ui.text("Dots: ", |t| t.color(theme.text_primary).font_size(16));
                         let (dt, open) = elements::dropdown(
                             ui,
@@ -111,21 +112,6 @@ async fn main() {
                         view.dots_dropdown = open;
                         next_model.dot_type = dt.unwrap_or_default();
 
-                        ui.text("Color: ", |t| t.color(theme.text_primary).font_size(16));
-                        let col = elements::text_input(ui, &theme, "color_input", "color", |s| {
-                            qr_code_styling::Color::from_hex(s)
-                                .map(|_| ())
-                                .with_context(|| "Incorrect color input by user")
-                        });
-
-                        next_model.dot_color = col;
-                    });
-                // Corner Dot
-                ui.element()
-                    .height(fit!())
-                    .width(grow!())
-                    .layout(|l| l.direction(LeftToRight).padding(8).align(Left, CenterY))
-                    .children(|ui| {
                         ui.text("Corner dot: ", |t| {
                             t.color(theme.text_primary).font_size(16)
                         });
@@ -140,13 +126,35 @@ async fn main() {
 
                         view.corner_dots_dropdown = open;
                         next_model.corner_dot_type = dt.unwrap_or_default();
-
-                        ui.text("Color", |t| t.color(theme.text_primary).font_size(16));
-                        let col = elements::text_input(ui, &theme, "corner_dot_color_input", "color", |s| {
+                    });
+                // Colors
+                ui.element()
+                    .height(fit!())
+                    .width(grow!())
+                    .layout(|l| l.direction(LeftToRight).padding(8).align(Left, CenterY))
+                    .children(|ui| {
+                        ui.text("Colors: ", |t| t.color(theme.text_primary).font_size(16));
+                        ui.text("Dots: ", |t| t.color(theme.text_primary).font_size(16));
+                        let col = elements::text_input(ui, &theme, "color_input", "color", |s| {
                             qr_code_styling::Color::from_hex(s)
                                 .map(|_| ())
                                 .with_context(|| "Incorrect color input by user")
                         });
+
+                        next_model.dot_color = col;
+
+                        ui.text("Corner dots", |t| t.color(theme.text_primary).font_size(16));
+                        let col = elements::text_input(
+                            ui,
+                            &theme,
+                            "corner_dot_color_input",
+                            "color",
+                            |s| {
+                                qr_code_styling::Color::from_hex(s)
+                                    .map(|_| ())
+                                    .with_context(|| "Incorrect color input by user")
+                            },
+                        );
 
                         next_model.corner_dot_color = col;
                     });
