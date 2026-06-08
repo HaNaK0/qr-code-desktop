@@ -50,8 +50,8 @@ fn window_conf() -> macroquad::conf::Conf {
 async fn main() {
     env_logger::init();
     info!("Qr code desktop");
-
-    static DEFAULT_FONT: FontAsset = FontAsset::Path("assets/fonts/lexend.ttf");
+    
+    static DEFAULT_FONT: FontAsset = FontAsset::Bytes { file_name: "lexend.ttf", data: include_bytes!("../assets/fonts/lexend.ttf") };
     let mut ply = Ply::<()>::new(&DEFAULT_FONT).await;
     let theme = theme::Theme {
         surface: (
